@@ -16,16 +16,9 @@
 
 #define MAX_PROGRAM_LENGTH 256
 #define OUTPUTBUFFER_LENGTH 256
-/*#include <fcntl.h> // working with file descriptors (open,close, ...)
-#include <unistd.h>
-#include <termios.h> // usb specific stuff
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>*/
 
 DECL_LIST(ListAtom,ElementAtom,t_atom,copybytes,getbytes,freebytes);
 
-//DECL_LIST(ListSTEntry,ElementSTEntry,STEntry,copybytes,getbytes,freebytes);
 
 //typedef ListAtom Code;
 typedef t_atom Command;
@@ -35,8 +28,6 @@ struct SFunctionInfo;
 
 // information kept during runtime for each function:
 typedef struct SCommandInfo {
-	//t_atom name;
-	//t_int countParam;
 	t_int stackHeight0;
 	FunctionInfo* pFunctionInfo;
 } CommandInfo;
@@ -71,15 +62,6 @@ typedef struct _sgScript {
 } t_sgScript;
 
 
-/*
-int usbOpen();
-int usbClose();
-int usbSend();
-void onReceiveData();
-*/
-
-//static t_class* sgScript_class;
-
 t_class* sgScriptObjInit();
 void sgScriptObjExit();
 
@@ -104,8 +86,6 @@ t_atom* lexer_getNextToken(t_sgScript* pThis);
 TokenFits lexer_consumeNextToken(t_sgScript* pThis, t_atom* pExpectedSym);
 void lexer_setIP(t_sgScript* pThis, t_int peek);
 
-
-//void ParseStatements(t_sgScript* pThis,
 
 void freeProgram(t_sgScript* pThis);
 void freeMetaProgram(t_sgScript* pThis);

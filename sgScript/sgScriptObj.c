@@ -471,7 +471,7 @@ BOOL isProc(t_atom* pToken)
 
 void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("add");
+	//POST("add");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(& pArgs[0]) + atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -481,7 +481,7 @@ void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 
 void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("sub");
+	//POST("sub");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) - atom_getfloat(&pArgs[1]));
 	//push result on stack:
@@ -489,7 +489,7 @@ void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 }
 void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("mul");
+	//POST("mul");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) * atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -497,7 +497,7 @@ void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 }
 void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("div");
+	//POST("div");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) / atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -684,7 +684,7 @@ void setVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 
 void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("addMainVar");
+	//POST("addMainVar");
 	if( countArgs == 0 )
 	{
 		POST("WARNING: addMainVar with zero parameters called!");
@@ -712,14 +712,14 @@ void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 }
 void clearMain(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("clearMain");
+	//POST("clearMain");
 	SymbolTable_Exit( pThis -> pSymbolTable );
 	SymbolTable_Init( pThis -> pSymbolTable );
 }
 
 void if_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	POST("if_ called!!");
+	//POST("if_ called!!");
 	if( atom_getfloat(& pArgs[0]) )
 	{
 		CommandInfo* pCurrentCommandInfo = getbytes(sizeof(CommandInfo));
@@ -896,9 +896,9 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	ElementAtom* pCurrent = ListAtomGetFirst( & listReturn );
 	while ( pCurrent )
 	{
-		char buf[256];
+		/*char buf[256];
 		atom_string( pCurrent->pData, buf, 256);
-		POST("current: %s", buf);
+		POST("current: %s", buf);*/
 		t_atom* pResult = getbytes(sizeof(t_atom));
 		(*pResult) = (* pCurrent -> pData);
 		ListAtomAdd( &pThis -> stack, pResult);
