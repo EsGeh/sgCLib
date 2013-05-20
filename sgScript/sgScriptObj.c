@@ -66,7 +66,7 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(28,"SetOp",-1,-1,&setOp);
 	FINFO_INDEX(29,"CalcTransp",-1,-1,&calcTransp);
 	FINFO_INDEX(30,"Contains",-1,-1,&contains);
-	FINFO_INDEX(31,"Mod",-1,-1,&mod);
+	FINFO_INDEX(31,"Mod",2,-1,&mod);
 	pNOP = &listFunctionInfo[0];
 
 	sgScriptClass = class_new(
@@ -1061,7 +1061,15 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 
 void mod(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 {
-	t_atom m = *( pArgs[0] );
+
+	t_float a = atom_getfloat( pArgs[0] );
+	t_float b = atom_getfloat( pArgs[1] );
+	DELPARAMS
+
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT( pResult, a && b );
+	ListAtomAdd( &pThis -> stack, pResult);
+	/*t_atom m = *( pArgs[0] );
 	DELPARAMS
 
 	for( int i=1; i<countArgs; countArgs++)
@@ -1070,7 +1078,7 @@ void mod(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 		t_atom* pResult = getbytes(sizeof(t_atom));
 		SETFLOAT( pResult, (t_int )atom_getfloat(&x) % (t_int )atom_getfloat(&m) );
 		ListAtomAdd( &pThis -> stack, pResult);
-	}
+	}*/
 }
 
 void nop(t_sgScript* pThis, t_int countArgs, t_atom** pArgs){
