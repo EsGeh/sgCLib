@@ -132,6 +132,7 @@ void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // output:
 void print(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void pack(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
@@ -167,7 +168,11 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void contains(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
-void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void addA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void subA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void mulA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void divA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void modA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 // just throw away all parameters:
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);

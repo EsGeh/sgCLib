@@ -9,7 +9,7 @@ void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countPar
 static t_class* sgScriptClass;
 
 
-#define FUNCTION_COUNT 32
+#define FUNCTION_COUNT 37
 
 t_atom leftParenthesis, rightParenthesis;
 FunctionInfo listFunctionInfo[FUNCTION_COUNT];
@@ -33,40 +33,45 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(2,"Sub",2,-1,&sub);
 	FINFO_INDEX(3,"Mul",2,-1,&mul);
 	FINFO_INDEX(4,"Div",2,-1,&div);
-	FINFO_INDEX(5,"Print",-1,-1,&print);
-	FINFO_INDEX(6,"Pack",-1,-1,&pack);
-	FINFO_INDEX(7,"Out",0,-1,&out);
-	FINFO_INDEX(8,"Var",-1,-1,&addVar);
-	FINFO_INDEX(9,"Get",1,-1,&getVar);
-	FINFO_INDEX(10,"GetA",2,-1,&getVarA);
-	FINFO_INDEX(11,"Set",-1,-1,&setVar);
-	FINFO_INDEX(12,"SetA",-1,-1,&setVarA);
-	FINFO_INDEX(13,"If",-1,1,&if_);
-	FINFO_INDEX(14,"VarMain",-1,-1,&addMainVar);
-	FINFO_INDEX(15,"ClearMain",0,-1,&clearMain);
+	FINFO_INDEX(5,"Mod",2,-1,&mod);
+	FINFO_INDEX(6,"Print",-1,-1,&print);
+	FINFO_INDEX(7,"Pack",-1,-1,&pack);
+	FINFO_INDEX(8,"Out",0,-1,&out);
+	FINFO_INDEX(9,"Var",-1,-1,&addVar);
+	FINFO_INDEX(10,"Get",1,-1,&getVar);
+	FINFO_INDEX(11,"GetA",2,-1,&getVarA);
+	FINFO_INDEX(12,"Set",-1,-1,&setVar);
+	FINFO_INDEX(13,"SetA",-1,-1,&setVarA);
+	FINFO_INDEX(14,"If",-1,1,&if_);
+	FINFO_INDEX(15,"VarMain",-1,-1,&addMainVar);
+	FINFO_INDEX(16,"ClearMain",0,-1,&clearMain);
 	// sgScales:
 	// a | b , c , x
-	FINFO_INDEX(16,"sgFunc",4,-1,&sgFunc);
+	FINFO_INDEX(17,"sgFunc",4,-1,&sgFunc);
 	// # , a | b , c 
-	FINFO_INDEX(17,"sgScale",4,-1,&sgScale);
+	FINFO_INDEX(18,"sgScale",4,-1,&sgScale);
 	// boolean operators:
 
-	FINFO_INDEX(18,"&&",2,-1,&and_);
-	FINFO_INDEX(19,"||",2,-1,&or_);
-	FINFO_INDEX(20,"!",1,-1,&not_);
+	FINFO_INDEX(19,"&&",2,-1,&and_);
+	FINFO_INDEX(20,"||",2,-1,&or_);
+	FINFO_INDEX(21,"!",1,-1,&not_);
 	// comparison operators:
-	FINFO_INDEX(21,"==",2,-1,&isEqual);
-	FINFO_INDEX(22,"!=",2,-1,&isNotEqual);
-	FINFO_INDEX(23,"<",2,-1,&isLessThan);
-	FINFO_INDEX(24,">",2,-1,&isGreaterThan);
-	FINFO_INDEX(25,"<=",2,-1,&isLessOrEqual);
-	FINFO_INDEX(26,">=",2,-1,&isGreaterOrEqual);
+	FINFO_INDEX(22,"==",2,-1,&isEqual);
+	FINFO_INDEX(23,"!=",2,-1,&isNotEqual);
+	FINFO_INDEX(24,"<",2,-1,&isLessThan);
+	FINFO_INDEX(25,">",2,-1,&isGreaterThan);
+	FINFO_INDEX(26,"<=",2,-1,&isLessOrEqual);
+	FINFO_INDEX(27,">=",2,-1,&isGreaterOrEqual);
 	// Set operations:
-	FINFO_INDEX(27,"Card",-1,-1,&card);
-	FINFO_INDEX(28,"SetOp",-1,-1,&setOp);
-	FINFO_INDEX(29,"CalcTransp",-1,-1,&calcTransp);
-	FINFO_INDEX(30,"Contains",-1,-1,&contains);
-	FINFO_INDEX(31,"Mod",2,-1,&mod);
+	FINFO_INDEX(28,"Card",-1,-1,&card);
+	FINFO_INDEX(29,"SetOp",-1,-1,&setOp);
+	FINFO_INDEX(30,"CalcTransp",-1,-1,&calcTransp);
+	FINFO_INDEX(31,"Contains",-1,-1,&contains);
+	FINFO_INDEX(32,"AddA",-1,-1,&addA);
+	FINFO_INDEX(33,"SubA",-1,-1,&subA);
+	FINFO_INDEX(34,"MulA",-1,-1,&mulA);
+	FINFO_INDEX(35,"DivA",-1,-1,&divA);
+	FINFO_INDEX(36,"ModA",-1,-1,&modA);
 	pNOP = &listFunctionInfo[0];
 
 	sgScriptClass = class_new(
@@ -500,6 +505,14 @@ void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	//POST("div");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) / atom_getfloat(& pArgs[1]));
+	//push result on stack:
+	ListAtomAdd( &pThis -> stack, pResult);
+}
+void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	//POST("div");
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT( pResult, (t_int )atom_getfloat(&pArgs[0]) % (t_int )atom_getfloat(& pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
@@ -1000,27 +1013,92 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	ListAtomExit( & listReturn );
 }
 
-void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+void addA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-
-	t_float a = atom_getfloat( & pArgs[0] );
-	t_float b = atom_getfloat( & pArgs[1] );
-
-	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, a && b );
-	ListAtomAdd( &pThis -> stack, pResult);
-	/*t_atom m = *( pArgs[0] );
-	DELPARAMS
-
-	for( int i=1; i<countArgs; countArgs++)
+	if( countArgs == 0 )
 	{
-		t_atom x = *( pArgs[i] );
+		POST("addA called with no parameters!");
+		return;
+	}
+	t_atom a = pArgs[0] ;
+	for( int i=1; i<countArgs; i++)
+	{
+		t_atom x = pArgs[i] ;
+		t_atom* pResult = getbytes(sizeof(t_atom));
+		SETFLOAT( pResult, atom_getfloat(&x) + atom_getfloat(&a) );
+		ListAtomAdd( &pThis -> stack, pResult);
+	}
+}
+void subA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("subA called with no parameters!");
+		return;
+	}
+	t_atom a = pArgs[0] ;
+	for( int i=1; i<countArgs; i++)
+	{
+		t_atom x = pArgs[i] ;
+		t_atom* pResult = getbytes(sizeof(t_atom));
+		SETFLOAT( pResult, atom_getfloat(&x) - atom_getfloat(&a) );
+		ListAtomAdd( &pThis -> stack, pResult);
+	}
+}
+void mulA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("mulA called with no parameters!");
+		return;
+	}
+	t_atom a = pArgs[0] ;
+	for( int i=1; i<countArgs; i++)
+	{
+		t_atom x = pArgs[i] ;
+		t_atom* pResult = getbytes(sizeof(t_atom));
+		SETFLOAT( pResult, atom_getfloat(&x) * atom_getfloat(&a) );
+		ListAtomAdd( &pThis -> stack, pResult);
+	}
+}
+void divA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("divA called with no parameters!");
+		return;
+	}
+	t_atom a = pArgs[0] ;
+	for( int i=1; i<countArgs; i++)
+	{
+		t_atom x = pArgs[i] ;
+		t_atom* pResult = getbytes(sizeof(t_atom));
+		SETFLOAT( pResult, atom_getfloat(&x) / atom_getfloat(&a) );
+		ListAtomAdd( &pThis -> stack, pResult);
+	}
+}
+
+void modA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("modA called with no parameters!");
+		return;
+	}
+	/*t_float m = atom_getfloat( & pArgs[0] );
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT( pResult, a  b );
+	ListAtomAdd( &pThis -> stack, pResult)*/
+	t_atom m = pArgs[0] ;
+	for( int i=1; i<countArgs; i++)
+	{
+		t_atom x = pArgs[i] ;
 		t_atom* pResult = getbytes(sizeof(t_atom));
 		SETFLOAT( pResult, (t_int )atom_getfloat(&x) % (t_int )atom_getfloat(&m) );
 		ListAtomAdd( &pThis -> stack, pResult);
-	}*/
+	}
 }
 
-void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs){
-	//DELPARAMS
+void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
 }
