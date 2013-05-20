@@ -1,0 +1,106 @@
+#N canvas 0 49 1438 584 10;
+#X obj 40 129 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 278 278 print OUT;
+#X text 659 180 test basic syntax;
+#X text 656 230 test using variables:;
+#X obj 193 278 sgPrepend set;
+#X text 654 386 test constructing sgPacks:;
+#X msg 658 404 list Print ( Pack ( testPack Pack ( SubPack 1 2 3 )
+Hussa Bla ) ) Out ( );
+#X text 657 333 test conditionality;
+#X msg 658 85 list Print ( Add ( 2 3 ) ) Out ( );
+#X msg 665 28 list bla ( 7 );
+#X text 656 103 try to call a function with wrong number of parameters:
+;
+#X msg 656 123 list Add ( 2 3 4 );
+#X msg 658 351 list If ( Add ( 0 1 ) Print ( execute ) ) If ( Sub (
+3 3 ) Print ( dont execute ) ) Out ( );
+#X msg 659 249 list Var ( list 7 8 9 ) Print ( Get ( list ) ) Set (
+list 1 2 3 ) Print ( Pack ( paket Get ( list ) ) ) Out ( );
+#X msg 659 300 list Var ( list -1 -2 -3 ) Print ( GetA ( list -1 )
+) SetA ( list 1 100 ) Print ( Get ( list ) ) Out ( );
+#X msg 1035 252 list Print ( Get ( list ) ) Out ( );
+#X msg 364 41 list Print ( Get ( MAIN ) ) Out ( );
+#X msg 40 173 list ClearMain ( );
+#X obj 285 235 sgScript;
+#X obj 154 477 sgScript PARAM;
+#X obj 134 455 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 141 516 sgPrepend set;
+#X msg 140 538 20 40;
+#X msg 214 441 set PARAM \$1;
+#X floatatom 217 413 5 0 0 0 - - -;
+#X msg 299 449 set PARAM 7 8 9 10;
+#X msg 266 487 list Print ( Get ( PARAM ) ) Print ( Mul ( Get ( PARAM
+) 2 ) ) Out ( );
+#X msg 109 382 list ClearMain ( ) VarMain ( PARAM 7 8 9 ) \, bang;
+#X msg 299 414 list ClearMain ( );
+#X text 657 64 standard parameter passing:;
+#X msg 40 151 list VarMain ( MAIN hallo Welt );
+#X msg 657 160 list Print ( Hallo Add ( 1 7 ) ) Print ( test ) Out
+( );
+#X text 656 141 Print can take a variable number of parameters:;
+#X msg 658 198 list Print ( Add ( 2 3 ) ) Print ( Mul ( 2 3 ) ) Print
+( Holla! ) Out ( );
+#X text 656 281 test using variables as lists:;
+#X text 663 7 try invocing a command that does not exist;
+#X text 1031 232 try reading a variable that does not exist;
+#X msg 153 341 list VarMain ( PARAM 0 );
+#X msg 292 101 list Print ( sgScale ( 6 2 1 11 ) ) Out ( );
+#X msg 428 679 list If ( == ( 1 2 ) Print ( hallo ) ) Out ( );
+#X msg 426 713 list If ( != ( 1 2 ) Print ( hallo ) ) Out ( );
+#X msg 192 300 2 3 4 8 9 10;
+#X msg 707 492 list If ( Card ( 1 2 3 ) Print ( list contains something!
+) ) If ( ! ( Card ( ) ) Print ( the second doesnt! ) ) Out ( );
+#X msg 699 555 list Print ( and && ( 1 0 ) ) Print ( or || ( 1 0 )
+) Print ( not ! ( 1 ) ) Out ( );
+#X obj 1130 152 sgScript INPUT;
+#X msg 1098 119 set INPUT \$1 \, bang;
+#X floatatom 1130 174 5 0 0 0 - - -;
+#X floatatom 1102 93 5 0 0 0 - - -;
+#X msg 1024 64 list Print ( Mod ( 12 sgFunc ( Get ( INPUT ) 1 1 0 )
+) ) Out ( );
+#X msg 1032 383 list Var ( set SetOp ( 1 2 3 union 1 8 9 ) ) Print
+( set Get ( set ) ) Print ( contains? Contains ( 100 Get ( set ) )
+) Out ( );
+#X msg 1033 435 list Print ( CalcTransp ( 0 1 6 7 | 0 1 6 7 ) ) Out
+( );
+#X connect 0 0 18 0;
+#X connect 4 0 41 0;
+#X connect 6 0 18 1;
+#X connect 8 0 18 1;
+#X connect 9 0 18 1;
+#X connect 11 0 18 1;
+#X connect 12 0 18 1;
+#X connect 13 0 18 1;
+#X connect 14 0 18 1;
+#X connect 15 0 18 1;
+#X connect 16 0 18 1;
+#X connect 17 0 18 0;
+#X connect 18 0 1 0;
+#X connect 18 0 4 0;
+#X connect 19 0 21 0;
+#X connect 20 0 19 0;
+#X connect 21 0 22 0;
+#X connect 23 0 19 2;
+#X connect 24 0 23 0;
+#X connect 25 0 19 2;
+#X connect 26 0 19 1;
+#X connect 27 0 19 0;
+#X connect 28 0 19 0;
+#X connect 30 0 18 0;
+#X connect 31 0 18 1;
+#X connect 33 0 18 1;
+#X connect 37 0 19 0;
+#X connect 38 0 18 1;
+#X connect 39 0 18 1;
+#X connect 40 0 18 1;
+#X connect 42 0 18 1;
+#X connect 43 0 18 1;
+#X connect 44 0 46 0;
+#X connect 45 0 44 0;
+#X connect 47 0 45 0;
+#X connect 48 0 44 1;
+#X connect 49 0 18 1;
+#X connect 50 0 18 1;
