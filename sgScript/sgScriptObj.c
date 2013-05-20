@@ -379,21 +379,29 @@ void lexer_setIP(t_sgScript* pThis, t_int peek)
 void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countParam)
 {
 	// create an array of pointers to the parameters:
-	t_atom** pArrayParam = getbytes( sizeof(t_atom* )* countParam);
+	//t_atom** pArrayParam = getbytes( sizeof(t_atom* )* countParam);
+	// first copy params:
+	t_atom* pArgs = getbytes( sizeof(t_atom )* countParam);
 	{
 		ElementAtom* pElOpNext = ListAtomGetLast( &pThis -> stack);
 		//pArrayParam[countParam-1] = pElOpNext -> pData;
 		for ( int i=countParam-1; i>=0; i--)
 		{
-			pArrayParam[i] = pElOpNext-> pData;
+			pArgs[i] = *(pElOpNext-> pData);
 			pElOpNext = ListAtomGetPrev( &pThis -> stack, pElOpNext);
 		}
 	}
+	// ... delete them from stack
+	for ( int i=0; i<countParam; i++)
+	{
+		ElementAtom* pElParam = ListAtomGetLast ( &pThis -> stack );
+		ListAtomDel( &pThis -> stack, pElParam );
+	}
 	POST("callFunction called");
 	// call command:
-	(pFunctionInfo -> pFunc) (pThis, countParam, pArrayParam);
+	(pFunctionInfo -> pFunc) (pThis, countParam, pArgs);
 	// free array of parameters:
-	freebytes( pArrayParam, sizeof(t_atom* ) * countParam );
+	freebytes( pArgs, sizeof(t_atom ) * countParam );
 }
 
 void freeProgram(t_sgScript* pThis)
@@ -461,66 +469,55 @@ BOOL isProc(t_atom* pToken)
 	return FALSE;
 }*/
 
-#define DELPARAMS\
-	for ( int i=0; i<countArgs; i++)\
-	{\
-		ElementAtom* pElParam = ListAtomGetLast ( &pThis -> stack );\
-		ListAtomDel( &pThis -> stack, pElParam );\
-	}
-
-void add(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("add");
 	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, atom_getfloat(pArgs[0]) + atom_getfloat(pArgs[1]));
-	DELPARAMS
+	SETFLOAT( pResult, atom_getfloat(& pArgs[0]) + atom_getfloat(& pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
 
-void sub(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("sub");
 	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, atom_getfloat(pArgs[0]) - atom_getfloat(pArgs[1]));
-	DELPARAMS
+	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) - atom_getfloat(&pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void mul(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("mul");
 	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, atom_getfloat(pArgs[0]) * atom_getfloat(pArgs[1]));
-	DELPARAMS
+	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) * atom_getfloat(& pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void div(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("div");
 	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, atom_getfloat(pArgs[0]) / atom_getfloat(pArgs[1]));
-	DELPARAMS
+	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) / atom_getfloat(& pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
-void print(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void print(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	for ( int i=0; i<countArgs; i++)
 	{
-		pThis -> outputBuffer [ pThis -> outputBufferCount ] = *(pArgs[i]);
+		pThis -> outputBuffer [ pThis -> outputBufferCount ] = (pArgs[i]);
 		pThis -> outputBufferCount ++ ;
 	}
 }
 
-void pack(t_sgScript* pThis, t_int countArgs, t_atom** pArrayParam)
+void pack(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	t_atom** pResult = getbytes(sizeof(t_atom* )* (countArgs + 2));
 	pResult[0] = getbytes( sizeof(t_atom) );
-	*pResult[0] = *pArrayParam[0];
+	*pResult[0] = pArgs[0];
 	t_atom atomSizePack;
 	SETFLOAT( &atomSizePack, countArgs-1 );
 	pResult[1] = getbytes( sizeof(t_atom) );
@@ -528,9 +525,8 @@ void pack(t_sgScript* pThis, t_int countArgs, t_atom** pArrayParam)
 	for(int i=0; i< countArgs-1; i++)
 	{
 		pResult[2+i] = getbytes( sizeof(t_atom) );
-		* pResult[2+i] = *pArrayParam[i+1];
+		* pResult[2+i] = pArgs[i+1];
 	}
-	DELPARAMS
 	ListAtomAdd( &pThis -> stack, pResult[0]);
 	ListAtomAdd( &pThis -> stack, pResult[1]);
 	for(int i=0; i< countArgs-1; i++)
@@ -540,7 +536,7 @@ void pack(t_sgScript* pThis, t_int countArgs, t_atom** pArrayParam)
 	freebytes( pResult, sizeof(t_atom* ) * (countArgs+2));
 }
 
-void out(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void out(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	outlet_list(
 		pThis -> pOutlet,
@@ -549,14 +545,10 @@ void out(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 		pThis -> outputBuffer
 		);
 	pThis -> outputBufferCount = 0;
-	DELPARAMS
 }
 
-void addVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void addVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	/*char buf[256];
-	atom_string(pName, buf, 256);
-	POST("addVar %s",buf);*/
 	if( countArgs == 0 )
 	{
 		POST("WARNING: addVar with zero parameters called!");
@@ -565,7 +557,6 @@ void addVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	else if( countArgs == 1 )
 	{
 		POST("WARNING: addVar with one parameters called!");
-		DELPARAMS
 		return;
 	}
 	Variable variable;
@@ -573,35 +564,29 @@ void addVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	variable . values = getbytes( sizeof(t_atom)* (countArgs-1) );
 	for( int i=0; i<(countArgs-1); i++ )
 	{
-		variable . values[i] = *pArgs[i+1];
+		variable . values[i] = pArgs[i+1];
 	}
 	STValue value;
 	value . type = VALUE;
 	value . variable = variable;
 	STEntry entry;
-	entry . symbol = *pArgs[0];
+	entry . symbol = pArgs[0];
 	entry . value = value;
 	SymbolTable_Add(pThis -> pSymbolTable, entry);
 	//addToSymbolTable( pThis, countArgs-1 , & pArgs[1]);
-	DELPARAMS
 }
 
 
-void getVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void getVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, pArgs[0] );
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
 	if( ! pSTValue )
 	{
 		char buf[256];
-		atom_string( pArgs[0], buf, 256 );
+		atom_string( & pArgs[0], buf, 256 );
 		POST("ERROR: getVar: couldn't find variable \"%s\"", buf);
 		return;
 	}
-	DELPARAMS
-	/*t_atom ret;
-	SETFLOAT( &ret, atom_getfloat(pArg1) / atom_getfloat(pArg2));
-	return ret;*/
-	//SETSYMBOL( pResult, gensym("<undefined>"));
 	if( pSTValue -> type == VALUE)
 	{
 		Variable* pVar = & pSTValue -> variable;
@@ -618,22 +603,17 @@ void getVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	
 }
 
-void getVarA(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void getVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, pArgs[0] );
-	t_int index = atom_getfloat( pArgs[1] );
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
+	t_int index = atom_getfloat( & pArgs[1] );
 	if( ! pSTValue )
 	{
 		char buf[256];
-		atom_string( pArgs[0], buf, 256 );
+		atom_string( & pArgs[0], buf, 256 );
 		POST("ERROR: getVar: couldn't find variable \"%s\"", buf);
 		return;
 	}
-	DELPARAMS
-	/*t_atom ret;
-	SETFLOAT( &ret, atom_getfloat(pArg1) / atom_getfloat(pArg2));
-	return ret;*/
-	//SETSYMBOL( pResult, gensym("<undefined>"));
 	if( pSTValue -> type == VALUE)
 	{
 		Variable* pVar = & pSTValue -> variable;
@@ -654,7 +634,7 @@ void getVarA(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 }
 
 //void setVar(t_sgScript* pThis, t_atom* pName, t_atom* pValue)
-void setVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void setVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
@@ -662,13 +642,12 @@ void setVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 		return;
 	}
 
-	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, pArgs[0] );
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
 	if( !pSTValue )
 	{
 		char buf[256];
-		atom_string(pArgs[0],buf,256);
+		atom_string( & pArgs[0],buf,256);
 		POST("ERROR: variable \"%s\" not found!", buf);
-		DELPARAMS
 		return;
 	}
 	Variable* pVar = & pSTValue -> variable;
@@ -676,50 +655,34 @@ void setVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	pVar->values = getbytes( sizeof(t_atom)* (countArgs-1));
 	for( int i=0; i<(countArgs-1); i++ )
 	{
-		pVar->values[i] = * pArgs[i+1];
+		pVar->values[i] = pArgs[i+1];
 	}
-
-	//SymbolTable_Del( pThis -> pSymbolTable, *pArgs[0] );
-	//SymbolTable_Add( pThis -> pSymbolTable, pArgs[0] );
-
-	/*pSTValue -> type = VALUE;
-	pSTValue -> variable . values[0] = *pArgs[1];*/
-	DELPARAMS
 }
 
-void setVarA(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void setVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_int index = atom_getfloat( pArgs[1] );
-	t_atom* pNewValue = pArgs[2];
+	t_int index = atom_getfloat( &pArgs[1] );
+	t_atom* pNewValue = & pArgs[2];
 
-	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, pArgs[0] );
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
 	if( !pSTValue )
 	{
 		char buf[256];
-		atom_string(pArgs[0],buf,256);
+		atom_string(& pArgs[0],buf,256);
 		POST("ERROR: variable \"%s\" not found!", buf);
-		DELPARAMS
 		return;
 	}
 	Variable* pVar = & pSTValue -> variable;
 	if( index < 0 || index >= pVar->count )
 	{
 		POST("ERROR: setVarA: index out of bounds: \"%i\"", (int )index);
-		DELPARAMS
 		return;
 	}
 	pVar->values[index] = *pNewValue;
 
-	//SymbolTable_Del( pThis -> pSymbolTable, *pArgs[0] );
-	//SymbolTable_Add( pThis -> pSymbolTable, pArgs[0] );
-
-	/*pSTValue -> type = VALUE;
-	pSTValue -> variable . values[0] = *pArgs[1];*/
-	DELPARAMS
-
 }
 
-void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("addMainVar");
 	if( countArgs == 0 )
@@ -730,7 +693,6 @@ void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	else if( countArgs == 1 )
 	{
 		POST("WARNING: addMainVar with one parameters called!");
-		DELPARAMS
 		return;
 	}
 	Variable variable;
@@ -738,30 +700,27 @@ void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	variable . values = getbytes( sizeof(t_atom)* (countArgs-1) );
 	for( int i=0; i<(countArgs-1); i++ )
 	{
-		variable . values[i] = *pArgs[i+1];
+		variable . values[i] = pArgs[i+1];
 	}
 	STValue value;
 	value . type = VALUE;
 	value . variable = variable;
 	STEntry entry;
-	entry . symbol = *pArgs[0];
+	entry . symbol = pArgs[0];
 	entry . value = value;
 	SymbolTable_AddMainVar(pThis -> pSymbolTable, entry);
-	//addToSymbolTable( pThis, countArgs-1 , & pArgs[1]);
-	DELPARAMS
 }
-void clearMain(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void clearMain(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("clearMain");
 	SymbolTable_Exit( pThis -> pSymbolTable );
 	SymbolTable_Init( pThis -> pSymbolTable );
-	DELPARAMS
 }
 
-void if_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void if_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	POST("if_ called!!");
-	if( atom_getfloat(pArgs[0]) )
+	if( atom_getfloat(& pArgs[0]) )
 	{
 		CommandInfo* pCurrentCommandInfo = getbytes(sizeof(CommandInfo));
 		pCurrentCommandInfo -> stackHeight0 = ListAtomGetSize ( & pThis -> stack );
@@ -773,28 +732,25 @@ void if_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	{
 		pThis->skipMode = TRUE;
 	}
-	DELPARAMS
 }
 
 // sgScales:
-void sgFunc(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void sgFunc(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float x = atom_getfloat( pArgs[0] );
-	t_float stepAdd = atom_getfloat( pArgs[1] );
-	t_float step0 = atom_getfloat( pArgs[2] );
-	t_float c = atom_getfloat( pArgs[3] );
-	DELPARAMS
+	t_float x = atom_getfloat( & pArgs[0] );
+	t_float stepAdd = atom_getfloat( & pArgs[1] );
+	t_float step0 = atom_getfloat( & pArgs[2] );
+	t_float c = atom_getfloat( & pArgs[3] );
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, c + stepAdd/2 * x*x + ( step0 - stepAdd/2 ) * x );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void sgScale(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void sgScale(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float n = atom_getfloat( pArgs[0] );
-	t_float stepAdd = atom_getfloat( pArgs[1] );
-	t_float step0 = atom_getfloat( pArgs[2] );
-	t_float c = atom_getfloat( pArgs[3] );
-	DELPARAMS
+	t_float n = atom_getfloat( & pArgs[0] );
+	t_float stepAdd = atom_getfloat( & pArgs[1] );
+	t_float step0 = atom_getfloat( & pArgs[2] );
+	t_float c = atom_getfloat( & pArgs[3] );
 
 	for( int i=0; i<n; i++ )
 	{
@@ -805,30 +761,27 @@ void sgScale(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 }
 
 // boolean operators:
-void and_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void and_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a && b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void or_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void or_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a || b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void not_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void not_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, ! a );
@@ -836,62 +789,56 @@ void not_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 }
 
 // comparison operators:
-void isEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a == b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void isNotEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isNotEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a != b );
 	ListAtomAdd( &pThis -> stack, pResult);
 
 }
-void isLessThan(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isLessThan(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a < b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void isGreaterThan(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isGreaterThan(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a > b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void isLessOrEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isLessOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a <= b );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a >= b );
@@ -900,17 +847,15 @@ void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 
 typedef enum ESetOp { UNION } SetOp;
 // Set operations:
-//BOOL setContains(t_int count, t_atom** set, t_atom* element);
-void card(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void card(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	DELPARAMS
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, countArgs );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
 BOOL listContains(ListAtom* pList, t_atom* pElement);
-void setOp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	ListAtom listReturn;
 	ListAtomInit( & listReturn );
@@ -921,7 +866,7 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	SetOp op;
 	for( int i=0; i<countArgs; i++ )
 	{
-		t_atom* pCurrent = pArgs[i];
+		t_atom* pCurrent = & pArgs[i];
 		if( afterOp == FALSE )
 		{
 			//if( atom_getsymbol( pCurrent ) == gensym("union") )
@@ -948,7 +893,6 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 			}
 		}
 	}
-	DELPARAMS
 	ElementAtom* pCurrent = ListAtomGetFirst( & listReturn );
 	while ( pCurrent )
 	{
@@ -975,30 +919,29 @@ BOOL listContains(ListAtom* pList, t_atom* pElement)
 	}
 	return FALSE;
 }
-BOOL setContains(t_int count, t_atom** set, t_atom* element);
+BOOL setContains(t_int count, t_atom* set, t_atom* element);
 
-void contains(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void contains(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	t_atom element = *( pArgs[0] );
+	t_atom element = ( pArgs[0] );
 	BOOL bRet = setContains( countArgs-1, & pArgs[1], &element);
-	DELPARAMS
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, bRet );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
-BOOL setContains(t_int count, t_atom** set, t_atom* element)
+BOOL setContains(t_int count, t_atom* set, t_atom* element)
 {
 	for( int i=0; i<count; i++ )
 	{
-		if( atom_getfloat(set[i]) == atom_getfloat( element ))
+		if( atom_getfloat(& set[i]) == atom_getfloat( element ))
 			return TRUE;
 	}
 	return FALSE;
 }
 
-void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	// the sets should be separated by |
 	ListAtom listReturn;
@@ -1008,7 +951,7 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	t_int countFirst = 0;
 	for( int i=0; i<countArgs; i++ )
 	{
-		t_atom* pCurrent = pArgs[i];
+		t_atom* pCurrent = & pArgs[i];
 		if( atomEqualsString( pCurrent, "|" ) )
 		{
 			break;
@@ -1021,7 +964,6 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	if( countFirst == countArgs )
 	{
 		POST("ERROR: separator \"|\" not found!");
-		DELPARAMS
 		return;
 	}
 	for( int transp=0; transp<12; transp++ )
@@ -1030,7 +972,7 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 		for( int i=countFirst+1; i<countArgs; i++ )
 		{
 			t_atom current;
-			SETFLOAT( & current, (t_int )(atom_getfloat(pArgs[i]) + transp) % 12 );
+			SETFLOAT( & current, (t_int )(atom_getfloat( & pArgs[i]) + transp) % 12 );
 			if( setContains( countArgs-countFirst-1, pArgs, & current ) )
 			{
 				passed = FALSE;
@@ -1043,7 +985,6 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 			ListAtomAdd( & listReturn, pResult );
 		}
 	}
-	DELPARAMS
 	ElementAtom* pCurrent = ListAtomGetFirst( & listReturn );
 	while ( pCurrent )
 	{
@@ -1059,12 +1000,11 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	ListAtomExit( & listReturn );
 }
 
-void mod(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
+void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 
-	t_float a = atom_getfloat( pArgs[0] );
-	t_float b = atom_getfloat( pArgs[1] );
-	DELPARAMS
+	t_float a = atom_getfloat( & pArgs[0] );
+	t_float b = atom_getfloat( & pArgs[1] );
 
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, a && b );
@@ -1081,6 +1021,6 @@ void mod(t_sgScript* pThis, t_int countArgs, t_atom** pArgs)
 	}*/
 }
 
-void nop(t_sgScript* pThis, t_int countArgs, t_atom** pArgs){
-	DELPARAMS
+void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs){
+	//DELPARAMS
 }

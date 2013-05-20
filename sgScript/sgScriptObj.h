@@ -110,7 +110,7 @@ void lexer_setIP(t_sgScript* pThis, t_int peek);
 void freeProgram(t_sgScript* pThis);
 void freeMetaProgram(t_sgScript* pThis);
 
-typedef void (*POperatorFunction) (t_sgScript* pThis, t_int countParam, t_atom** pArrayParam);
+typedef void (*POperatorFunction) (t_sgScript* pThis, t_int countParam, t_atom* pArgs);
 
 // describes the restrictions for a function:
 /*
@@ -148,48 +148,48 @@ void tryToExecuteImmediately(t_sgScript* pThis);
 //BOOL isVar(t_atom* pToken);
 //BOOL isProc(t_atom* pToken);
 
-void add(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void sub(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void mul(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void div(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // output:
-void print(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void pack(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void out(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void print(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void pack(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void out(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // variables:
-void addVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void getVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void getVarA(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void setVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void setVarA(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void addVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void getVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void getVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void setVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void setVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // main variables:
-void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void clearMain(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void addMainVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void clearMain(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // conditionality:
-void if_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void if_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // sgScales:
-void sgFunc(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void sgScale(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void sgFunc(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void sgScale(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // boolean operators:
-void and_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void or_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void not_(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void and_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void or_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void not_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // comparison operators:
-void isEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void isNotEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void isLessThan(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void isGreaterThan(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void isLessOrEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void isEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void isNotEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void isLessThan(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void isGreaterThan(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void isLessOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // Set operations:
-void card(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void setOp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void contains(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
-void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void card(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void contains(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
-void mod(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 // just throw away all parameters:
-void nop(t_sgScript* pThis, t_int countArgs, t_atom** pArgs);
+void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 #endif
