@@ -71,7 +71,7 @@ void SymbolTable_Add (SymbolTable* pThis, STEntry Entry)
 	t_int iAllocated = getAllocatedSize(pThis);
 	if ( pThis -> entryCount >= iAllocated)
 	{
-		POST("double size of the symbol table...");
+		DB_PRINT("double size of the symbol table...");
 		doubleSize( pThis );
 	}
 	pThis -> entries [ pThis -> entryCount ] = Entry;
@@ -86,7 +86,7 @@ void SymbolTable_AddMainVar(SymbolTable* pThis, STEntry Entry)
 	t_int iAllocated = getAllocatedSizeMainVars(pThis);
 	if ( pThis -> mainVarsCount >= iAllocated)
 	{
-		POST("double size of the symbol table...");
+		DB_PRINT("double size of the symbol table...");
 		doubleSizeMainVars( pThis );
 	}
 	pThis -> mainVars [ pThis -> mainVarsCount ] = Entry;
@@ -113,20 +113,20 @@ STValue* SymbolTable_Lookup(SymbolTable* pThis, t_atom* pSymbol)
 {
 	char buf[256];
 	atom_string(pSymbol, buf, 256);
-	POST("SymbolTable_Lookup(..,%s)",buf);
+	DB_PRINT("SymbolTable_Lookup(..,%s)",buf);
 	for( int i=0; i< pThis -> mainVarsCount; i++)
 	{
 		STEntry* pEntryCurrent = & pThis -> mainVars [i];
-		atom_string( &pEntryCurrent -> symbol, buf, 256);
-		POST("entry: %s", buf);
+		/*atom_string( &pEntryCurrent -> symbol, buf, 256);
+		DB_PRINT("entry: %s", buf);*/
 		if( compareAtoms( & pEntryCurrent -> symbol , pSymbol))
 			return & pEntryCurrent -> value;
 	}
 	for( int i=0; i< pThis -> entryCount; i++)
 	{
 		STEntry* pEntryCurrent = & pThis -> entries [i];
-		atom_string( &pEntryCurrent -> symbol, buf, 256);
-		POST("entry: %s", buf);
+		/*atom_string( &pEntryCurrent -> symbol, buf, 256);
+		DB_PRINT("entry: %s", buf);*/
 		if( compareAtoms( & pEntryCurrent -> symbol , pSymbol))
 			return & pEntryCurrent -> value;
 	}

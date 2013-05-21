@@ -437,6 +437,8 @@ FunctionInfo* getFunctionInfo(t_atom* pName)
 
 BOOL isValue(t_atom* pToken)
 {
+	if( atomEqualsString( pToken, "(" ) )
+		return FALSE;
 	return TRUE;
 }
 
@@ -659,6 +661,7 @@ void setVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		POST("WARNING: setVar called with zero parameters");
 		return;
 	}
+	DB_PRINT("setVar called with %i args", countArgs);
 
 	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
 	if( !pSTValue )
@@ -671,6 +674,7 @@ void setVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	Variable* pVar = & pSTValue -> variable;
 	freebytes( pVar->values, sizeof(t_atom)* pVar->count);
 	pVar->values = getbytes( sizeof(t_atom)* (countArgs-1));
+	pVar->count = countArgs-1;
 	for( int i=0; i<(countArgs-1); i++ )
 	{
 		pVar->values[i] = pArgs[i+1];
