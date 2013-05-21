@@ -5,15 +5,26 @@
 # Pack <- Global, LinkedList
 # Global
 ###################################################################
+
+COMPILER_FLAGS_DEBUG=-g -DDEBUG
+LINKER_FLAGS_DEBUG=-g
+
+
 PATH_GLOBAL=c_global
 PATH_SGINPUTC=sgInputC
 PATH_SGSCRIPT=sgScript
 CC=gcc
-COMPILER_FLAGS=-Wall -g -fpic -std=c99 -Winline -fgnu89-inline -I$(PATH_GLOBAL)
+COMPILER_FLAGS=-Wall -fpic -std=c99 -Winline -fgnu89-inline -I$(PATH_GLOBAL)
 SGINPUTC_OBJECTS=sgInputC.o sgDevice.o sgInputToFunction.o Pack.o
 SGSCRIPT_OBJECTS=sgScriptLib.o sgScriptObj.o Pack.o SymbolTable.o
-LINKER_FLAGS=-shared -g -std=c99 -Winline -fgnu89-inline
+LINKER_FLAGS=-shared -std=c99 -Winline -fgnu89-inline
 OBJECTS_DIR=./obj
+
+# use a command line argument to control debug/release:
+ifeq ($(DEBUG),1)
+	COMPILER_FLAGS += $(COMPILER_FLAGS_DEBUG)
+	LINKER_FLAGS += $(LINKER_FLAGS_DEBUG)
+endif
 
 all: sgInputC sgScriptLib
 

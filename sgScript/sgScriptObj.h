@@ -131,7 +131,7 @@ void tryToExecuteImmediately(t_sgScript* pThis);
 void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
-void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void div_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // output:
 void print(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
@@ -163,6 +163,7 @@ void isGreaterThan(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void isLessOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 // Set operations:
+void setify(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void card(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void contains(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
@@ -173,6 +174,9 @@ void subA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void mulA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void divA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void modA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+// random
+void sgMinMax(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 // just throw away all parameters:
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);

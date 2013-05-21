@@ -1,5 +1,7 @@
 #include "sgScriptObj.h"
 
+#include <stdlib.h>
+
 DEF_LIST(ListAtom,ElementAtom,t_atom,copybytes,getbytes,freebytes);
 DEF_LIST(ListCommand,ElementCommand,CommandInfo,copybytes,getbytes,freebytes);
 
@@ -9,7 +11,7 @@ void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countPar
 static t_class* sgScriptClass;
 
 
-#define FUNCTION_COUNT 37
+#define FUNCTION_COUNT 40
 
 t_atom leftParenthesis, rightParenthesis;
 FunctionInfo listFunctionInfo[FUNCTION_COUNT];
@@ -32,7 +34,7 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(1,"Add",2,-1,&add);
 	FINFO_INDEX(2,"Sub",2,-1,&sub);
 	FINFO_INDEX(3,"Mul",2,-1,&mul);
-	FINFO_INDEX(4,"Div",2,-1,&div);
+	FINFO_INDEX(4,"Div",2,-1,&div_);
 	FINFO_INDEX(5,"Mod",2,-1,&mod);
 	FINFO_INDEX(6,"Print",-1,-1,&print);
 	FINFO_INDEX(7,"Pack",-1,-1,&pack);
@@ -63,15 +65,18 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(26,"<=",2,-1,&isLessOrEqual);
 	FINFO_INDEX(27,">=",2,-1,&isGreaterOrEqual);
 	// Set operations:
-	FINFO_INDEX(28,"Card",-1,-1,&card);
-	FINFO_INDEX(29,"SetOp",-1,-1,&setOp);
-	FINFO_INDEX(30,"CalcTransp",-1,-1,&calcTransp);
-	FINFO_INDEX(31,"Contains",-1,-1,&contains);
-	FINFO_INDEX(32,"AddA",-1,-1,&addA);
-	FINFO_INDEX(33,"SubA",-1,-1,&subA);
-	FINFO_INDEX(34,"MulA",-1,-1,&mulA);
-	FINFO_INDEX(35,"DivA",-1,-1,&divA);
-	FINFO_INDEX(36,"ModA",-1,-1,&modA);
+	FINFO_INDEX(28,"Setify",-1,-1,&setify);
+	FINFO_INDEX(29,"Card",-1,-1,&card);
+	FINFO_INDEX(30,"SetOp",-1,-1,&setOp);
+	FINFO_INDEX(31,"CalcTransp",-1,-1,&calcTransp);
+	FINFO_INDEX(32,"Contains",-1,-1,&contains);
+	FINFO_INDEX(33,"AddA",-1,-1,&addA);
+	FINFO_INDEX(34,"SubA",-1,-1,&subA);
+	FINFO_INDEX(35,"MulA",-1,-1,&mulA);
+	FINFO_INDEX(36,"DivA",-1,-1,&divA);
+	FINFO_INDEX(37,"ModA",-1,-1,&modA);
+	FINFO_INDEX(38,"Rnd",0,-1,&random_);
+	FINFO_INDEX(39,"MinMax",3,-1,&sgMinMax);
 	pNOP = &listFunctionInfo[0];
 
 	sgScriptClass = class_new(
@@ -129,7 +134,7 @@ void sgScriptObjExit()
 
 CONSTRUCTOR(sgScript,t_symbol* name, int argc, t_atom* argv)
 {
-	post("creating sgScript object...");
+	DB_PRINT("creating sgScript object...");
 	//t_sgScript* x = (t_sgScript* )pd_new(sgScript_class);
 	NEW_INSTANCE(sgScript,x);
 	x -> skipMode = FALSE;
@@ -192,7 +197,7 @@ CONSTRUCTOR(sgScript,t_symbol* name, int argc, t_atom* argv)
 
 DESTRUCTOR(sgScript,pThis)
 {
-	post("removing sgScript object...");
+	DB_PRINT("removing sgScript object...");
 	freeProgram(pThis);
 	freeMetaProgram(pThis);
 	SymbolTable_Free( pThis -> pSymbolTable );
@@ -215,7 +220,7 @@ void sgScriptObj_OnExecute(t_sgScript* pThis)
 
 void sgScriptObj_OnExecMeta(t_sgScript* pThis, t_symbol* s, int argc, t_atom* argv)
 {
-	POST("sgScriptObj_OnExecMeta");
+	DB_PRINT("sgScriptObj_OnExecMeta");
 	freeMetaProgram(pThis);
 	/*if( pThis -> currentCode != pThis -> code )
 		freebytes(pThis -> currentCode, pThis->currentProgCount * sizeof(Command));*/
@@ -231,14 +236,14 @@ void sgScriptObj_OnExecMeta(t_sgScript* pThis, t_symbol* s, int argc, t_atom* ar
 
 void sgScriptObj_OnSetProgram(t_sgScript* pThis, t_symbol* s, int argc, t_atom* argv)
 {
-	POST("sgScriptObj_OnSetProgram");
+	DB_PRINT("sgScriptObj_OnSetProgram");
 	freeProgram(pThis);
 	pThis -> code = copybytes(argv, sizeof(t_atom)*argc);
 	pThis -> cmdCount = argc;
 }
 void sgScriptObj_OnSetVar(t_sgScript* pThis, t_symbol* s, int argc, t_atom* argv)
 {
-	POST("sgScriptObj_OnSetVar");
+	DB_PRINT("sgScriptObj_OnSetVar");
 	t_atom* prog = getbytes( sizeof(t_atom)* (argc+3) );
 	SETSYMBOL( &prog[0], gensym("Set"));
 	SETSYMBOL( &prog[1], atom_getsymbol(&leftParenthesis));
@@ -270,7 +275,7 @@ void sgScriptObj_exec(t_sgScript* pThis)
 	{
 		char buf[256];
 		atom_string(pCurrentToken, buf, 256);
-		POST("current Token: '%s'", buf);
+		DB_PRINT("current Token: '%s'", buf);
 		FunctionInfo* pFunctionInfo = NULL;
 		pFunctionInfo = getFunctionInfo( pCurrentToken );
 		if( pFunctionInfo )
@@ -278,7 +283,7 @@ void sgScriptObj_exec(t_sgScript* pThis)
 			if( ! pThis->skipMode )
 			{
 				// <func>
-				POST("Is a function");
+				DB_PRINT("Is a function");
 				// add the function to the command stack:
 				CommandInfo* pCurrentCommandInfo = getbytes(sizeof(CommandInfo));
 				//pCurrentCommandInfo -> name = *pCurrentToken;
@@ -291,7 +296,7 @@ void sgScriptObj_exec(t_sgScript* pThis)
 			if( ! lexer_consumeNextToken(pThis, & leftParenthesis) )
 			{
 				// report syntax error:
-				POST("'(' expected, after ...");
+				POST("ERROR: '(' expected, after ...");
 			}
 			else if( pThis->skipMode )
 				countParenthesisRightIgnore ++;
@@ -339,7 +344,7 @@ void sgScriptObj_exec(t_sgScript* pThis)
 		}
 		else
 		{
-			POST("is a value");
+			DB_PRINT("is a value");
 			if( pThis->skipMode )
 				continue;
 			if (isValue(pCurrentToken))
@@ -351,7 +356,7 @@ void sgScriptObj_exec(t_sgScript* pThis)
 			}
 			else
 			{
-				POST("token is neither function, var, or procedure: '%s'",buf);
+				POST("ERROR: token is neither function, var, or procedure: '%s'",buf);
 			}
 			tryToExecuteImmediately(pThis);
 			pElCurrentFunction = ListCommandGetLast ( & pThis -> cmdStack );
@@ -402,7 +407,7 @@ void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countPar
 		ElementAtom* pElParam = ListAtomGetLast ( &pThis -> stack );
 		ListAtomDel( &pThis -> stack, pElParam );
 	}
-	POST("callFunction called");
+	DB_PRINT("callFunction called");
 	// call command:
 	(pFunctionInfo -> pFunc) (pThis, countParam, pArgs);
 	// free array of parameters:
@@ -443,7 +448,7 @@ void tryToExecuteImmediately(t_sgScript* pThis)
 	// if the topmost command is a dont-read-all-parameters-command:
 	if( pElCurrentFunction->pData -> pFunctionInfo -> executeAfter != -1)
 	{
-		POST("trying to executed immediately...:");
+		DB_PRINT("trying to executed immediately...:");
 		FunctionInfo* pFunctionInfo = pElCurrentFunction->pData -> pFunctionInfo;
 		// check if there are enough values on stack now to call the next function
 		t_int paramCount =
@@ -476,7 +481,7 @@ BOOL isProc(t_atom* pToken)
 
 void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	//POST("add");
+	DB_PRINT("add");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(& pArgs[0]) + atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -486,7 +491,7 @@ void add(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 
 void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	//POST("sub");
+	DB_PRINT("sub");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) - atom_getfloat(&pArgs[1]));
 	//push result on stack:
@@ -494,15 +499,15 @@ void sub(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 }
 void mul(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	//POST("mul");
+	DB_PRINT("mul");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) * atom_getfloat(& pArgs[1]));
 	//push result on stack:
 	ListAtomAdd( &pThis -> stack, pResult);
 }
-void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+void div_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	//POST("div");
+	DB_PRINT("div");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, atom_getfloat(&pArgs[0]) / atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -510,7 +515,7 @@ void div(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 }
 void mod(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
-	//POST("div");
+	DB_PRINT("div");
 	t_atom* pResult = getbytes(sizeof(t_atom));
 	SETFLOAT( pResult, (t_int )atom_getfloat(&pArgs[0]) % (t_int )atom_getfloat(& pArgs[1]));
 	//push result on stack:
@@ -612,7 +617,7 @@ void getVar(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		//return pSTValue -> value;
 	}
 	else
-		POST("symbol table entry is not a value!");
+		POST("ERROR: symbol table entry is not a value!");
 	
 }
 
@@ -642,7 +647,7 @@ void getVarA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		//return pSTValue -> value;
 	}
 	else
-		POST("symbol table entry is not a value!");
+		POST("ERROR: symbol table entry is not a value!");
 	
 }
 
@@ -860,6 +865,22 @@ void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 
 typedef enum ESetOp { UNION } SetOp;
 // Set operations:
+BOOL setContains(t_int count, t_atom* set, t_atom* element);
+BOOL listContains(ListAtom* pList, t_atom* pElement);
+
+void setify(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	for( int i=0; i<countArgs; i++ )
+	{
+		t_atom* pCurrent = & pArgs[i];
+		if( ! setContains( i-1, pArgs, pCurrent ) )
+		{
+			t_atom* pResult = getbytes(sizeof(t_atom));
+			*pResult = *pCurrent;
+			ListAtomAdd( &pThis -> stack, pResult);
+		}
+	}
+}
 void card(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	t_atom* pResult = getbytes(sizeof(t_atom));
@@ -867,7 +888,6 @@ void card(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
-BOOL listContains(ListAtom* pList, t_atom* pElement);
 void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	ListAtom listReturn;
@@ -932,7 +952,6 @@ BOOL listContains(ListAtom* pList, t_atom* pElement)
 	}
 	return FALSE;
 }
-BOOL setContains(t_int count, t_atom* set, t_atom* element);
 
 void contains(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
@@ -1001,9 +1020,9 @@ void calcTransp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	ElementAtom* pCurrent = ListAtomGetFirst( & listReturn );
 	while ( pCurrent )
 	{
-		char buf[256];
+		/*char buf[256];
 		atom_string( pCurrent->pData, buf, 256);
-		POST("current: %s", buf);
+		POST("current: %s", buf);*/
 		t_atom* pResult = getbytes(sizeof(t_atom));
 		(*pResult) = (* pCurrent -> pData);
 		ListAtomAdd( &pThis -> stack, pResult);
@@ -1017,7 +1036,7 @@ void addA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
-		POST("addA called with no parameters!");
+		POST("ERROR: addA called with no parameters!");
 		return;
 	}
 	t_atom a = pArgs[0] ;
@@ -1033,7 +1052,7 @@ void subA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
-		POST("subA called with no parameters!");
+		POST("ERROR: subA called with no parameters!");
 		return;
 	}
 	t_atom a = pArgs[0] ;
@@ -1049,7 +1068,7 @@ void mulA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
-		POST("mulA called with no parameters!");
+		POST("ERROR: mulA called with no parameters!");
 		return;
 	}
 	t_atom a = pArgs[0] ;
@@ -1065,7 +1084,7 @@ void divA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
-		POST("divA called with no parameters!");
+		POST("ERROR: divA called with no parameters!");
 		return;
 	}
 	t_atom a = pArgs[0] ;
@@ -1082,7 +1101,7 @@ void modA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
 	if( countArgs == 0 )
 	{
-		POST("modA called with no parameters!");
+		POST("ERROR: modA called with no parameters!");
 		return;
 	}
 	/*t_float m = atom_getfloat( & pArgs[0] );
@@ -1097,6 +1116,28 @@ void modA(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		SETFLOAT( pResult, (t_int )atom_getfloat(&x) % (t_int )atom_getfloat(&m) );
 		ListAtomAdd( &pThis -> stack, pResult);
 	}
+}
+
+void sgMinMax(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	t_float pMin = atom_getfloat( & pArgs[0] );
+	t_float pMax = atom_getfloat( & pArgs[1] );
+	t_float pInput = atom_getfloat( & pArgs[2] );
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT(
+		pResult,
+		((pMax) - (pMin)) * (pInput) + (pMin)
+	);
+	ListAtomAdd( &pThis -> stack, pResult);
+}
+
+// random
+// Rand ( )
+void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT( pResult, (rand() % 1000000)/1000000.0 );
+	ListAtomAdd( &pThis -> stack, pResult);
 }
 
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)

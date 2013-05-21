@@ -31,6 +31,13 @@
 		post(__buf);\
 	} while(0);
 
+#ifndef DEBUG
+	#define DB_PRINT(message, ...)
+#else
+	#define DB_PRINT(message, ...)\
+	POST(message, ## __VA_ARGS__)
+#endif
+
 #define TRY(code,errorMsg)\
 	do \
 	{\
