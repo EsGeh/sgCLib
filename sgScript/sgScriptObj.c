@@ -11,7 +11,7 @@ void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countPar
 static t_class* sgScriptClass;
 
 
-#define FUNCTION_COUNT 41
+#define FUNCTION_COUNT 44
 
 t_atom leftParenthesis, rightParenthesis;
 FunctionInfo listFunctionInfo[FUNCTION_COUNT];
@@ -79,6 +79,9 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(38,"Rnd",0,-1,&random_);
 	FINFO_INDEX(39,"MinMax",3,-1,&sgMinMax);
 	FINFO_INDEX(40,"RETURN_ALL",-1,-1,&returnAll);
+	FINFO_INDEX(41,"RndI",2,-1,&rndInt);
+	FINFO_INDEX(42,"Inc",1,-1,&inc);
+	FINFO_INDEX(43,"Dec",1,-1,&dec);
 	pNOP = &listFunctionInfo[0];
 	pRETURN_ALL = &listFunctionInfo[40];
 
@@ -1158,4 +1161,70 @@ void returnAll(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		*pResult = pArgs[i] ;
 		ListAtomAdd( &pThis -> stack, pResult);
 	}
+}
+
+
+void rndInt(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	t_int min = atom_getfloat( & pArgs[0] );
+	t_int max = atom_getfloat( & pArgs[1] );
+	t_atom* pResult = getbytes(sizeof(t_atom));
+	SETFLOAT( pResult, min + (rand() % (max - min + 1) ) );
+	ListAtomAdd( &pThis -> stack, pResult);
+}
+void inc(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("WARNING: inc called with zero parameters");
+		return;
+	}
+	DB_PRINT("inc called with %i args", countArgs);
+
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
+	if( !pSTValue )
+	{
+		char buf[256];
+		atom_string( & pArgs[0],buf,256);
+		POST("ERROR: inc: variable \"%s\" not found!", buf);
+		return;
+	}
+	Variable* pVar = & pSTValue -> variable;
+	t_float oldVal = atom_getfloat( & pVar -> values [0] );
+	freebytes( pVar->values, sizeof(t_atom)* pVar->count);
+	pVar->values = getbytes( sizeof(t_atom) );
+	pVar->count = 1;
+	SETFLOAT( & pVar->values [0], oldVal+1 );
+	/*for( int i=0; i<(countArgs-1); i++ )
+	{
+		pVar->values[i] = pArgs[i+1];
+	}*/
+}
+void dec(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	if( countArgs == 0 )
+	{
+		POST("WARNING: dec called with zero parameters");
+		return;
+	}
+	DB_PRINT("dec called with %i args", countArgs);
+
+	STValue* pSTValue = SymbolTable_Lookup( pThis -> pSymbolTable, & pArgs[0] );
+	if( !pSTValue )
+	{
+		char buf[256];
+		atom_string( & pArgs[0],buf,256);
+		POST("ERROR: dec: variable \"%s\" not found!", buf);
+		return;
+	}
+	Variable* pVar = & pSTValue -> variable;
+	t_float oldVal = atom_getfloat( & pVar -> values [0] );
+	freebytes( pVar->values, sizeof(t_atom)* pVar->count);
+	pVar->values = getbytes( sizeof(t_atom) );
+	pVar->count = 1;
+	SETFLOAT( & pVar->values [0], oldVal-1 );
+	/*for( int i=0; i<(countArgs-1); i++ )
+	{
+		pVar->values[i] = pArgs[i+1];
+	}*/
 }

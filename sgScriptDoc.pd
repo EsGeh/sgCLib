@@ -1,4 +1,4 @@
-#N canvas 0 49 1438 540 10;
+#N canvas 0 49 1438 628 10;
 #X obj 40 129 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
 -1;
 #X obj 278 278 print OUT;
@@ -49,7 +49,7 @@ list 1 2 3 ) Print ( Pack ( paket Get ( list ) ) ) Out ( );
 #X msg 292 101 list Print ( sgScale ( 6 2 1 11 ) ) Out ( );
 #X msg 428 679 list If ( == ( 1 2 ) Print ( hallo ) ) Out ( );
 #X msg 426 713 list If ( != ( 1 2 ) Print ( hallo ) ) Out ( );
-#X msg 192 300 2 3 4 8 9 10;
+#X msg 192 300 2;
 #X msg 659 442 list If ( Card ( 1 2 3 ) Print ( list contains something!
 ) ) If ( ! ( Card ( ) ) Print ( the second doesnt! ) ) Out ( );
 #X msg 660 481 list Print ( and && ( 1 0 ) ) Print ( or || ( 1 0 )
@@ -75,6 +75,9 @@ list 1 2 3 ) Print ( Pack ( paket Get ( list ) ) ) Out ( );
 #X msg 1082 495 list Print ( MinMax ( -5 5 Rnd ( ) ) ) Out ( );
 #X obj 154 477 sgScript PARAM;
 #X msg 259 540 list Print ( Get ( PARAM ) ) Out ( );
+#X msg 1032 556 list Print ( RndI ( 1 6 ) ) Out ( );
+#X msg 1030 583 list Var ( var 4 ) Print ( Inc ( var ) Get ( var )
+) Out ( );
 #X connect 0 0 18 0;
 #X connect 4 0 40 0;
 #X connect 6 0 18 1;
@@ -121,3 +124,5 @@ list 1 2 3 ) Print ( Pack ( paket Get ( list ) ) ) Out ( );
 #X connect 56 0 18 1;
 #X connect 57 0 20 0;
 #X connect 58 0 57 1;
+#X connect 59 0 18 1;
+#X connect 60 0 18 1;

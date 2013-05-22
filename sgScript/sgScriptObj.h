@@ -182,4 +182,8 @@ void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 void returnAll(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
+void rndInt(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void inc(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void dec(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+
 #endif
