@@ -11,12 +11,13 @@ void callFunction(t_sgScript* pThis, FunctionInfo* pFunctionInfo, t_int countPar
 static t_class* sgScriptClass;
 
 
-#define FUNCTION_COUNT 40
+#define FUNCTION_COUNT 41
 
 t_atom leftParenthesis, rightParenthesis;
 FunctionInfo listFunctionInfo[FUNCTION_COUNT];
 
 FunctionInfo* pNOP;
+FunctionInfo* pRETURN_ALL;
 
 #define FINFO_INDEX(INDEX,NAME,PARAMCOUNT,EXECAFTER,PFUNC)\
 {\
@@ -77,7 +78,9 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(37,"ModA",-1,-1,&modA);
 	FINFO_INDEX(38,"Rnd",0,-1,&random_);
 	FINFO_INDEX(39,"MinMax",3,-1,&sgMinMax);
+	FINFO_INDEX(40,"RETURN_ALL",-1,-1,&returnAll);
 	pNOP = &listFunctionInfo[0];
+	pRETURN_ALL = &listFunctionInfo[40];
 
 	sgScriptClass = class_new(
 		gensym("sgScript"), 		// name
@@ -746,9 +749,8 @@ void if_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	{
 		CommandInfo* pCurrentCommandInfo = getbytes(sizeof(CommandInfo));
 		pCurrentCommandInfo -> stackHeight0 = ListAtomGetSize ( & pThis -> stack );
-		pCurrentCommandInfo -> pFunctionInfo = pNOP;
+		pCurrentCommandInfo -> pFunctionInfo = pRETURN_ALL;
 		ListCommandAdd ( & pThis -> cmdStack, pCurrentCommandInfo);
-
 	}
 	else
 	{
@@ -1146,4 +1148,14 @@ void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
+}
+
+void returnAll(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
+{
+	for( int i=0; i<countArgs; i++ )
+	{
+		t_atom* pResult = getbytes(sizeof(t_atom));
+		*pResult = pArgs[i] ;
+		ListAtomAdd( &pThis -> stack, pResult);
+	}
 }

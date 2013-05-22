@@ -180,5 +180,6 @@ void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 // just throw away all parameters:
 void nop(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
+void returnAll(t_sgScript* pThis, t_int countArgs, t_atom* pArgs);
 
 #endif
