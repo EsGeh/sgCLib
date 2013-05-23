@@ -76,7 +76,7 @@ t_class* sgScriptObjInit()
 	FINFO_INDEX(35,"MulA",-1,-1,&mulA);
 	FINFO_INDEX(36,"DivA",-1,-1,&divA);
 	FINFO_INDEX(37,"ModA",-1,-1,&modA);
-	FINFO_INDEX(38,"Rnd",0,-1,&random_);
+	FINFO_INDEX(38,"Rnd",2,-1,&random_);
 	FINFO_INDEX(39,"MinMax",3,-1,&sgMinMax);
 	FINFO_INDEX(40,"RETURN_ALL",-1,-1,&returnAll);
 	FINFO_INDEX(41,"RndI",2,-1,&rndInt);
@@ -1144,8 +1144,10 @@ void sgMinMax(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 // Rand ( )
 void random_(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 {
+	t_float min = atom_getfloat( & pArgs[0] );
+	t_float max = atom_getfloat( & pArgs[1] );
 	t_atom* pResult = getbytes(sizeof(t_atom));
-	SETFLOAT( pResult, (rand() % 1000000)/1000000.0 );
+	SETFLOAT( pResult, min + (rand() % 1000000)/1000000.0 * (max-min) );
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
