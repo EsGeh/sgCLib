@@ -872,8 +872,12 @@ void isGreaterOrEqual(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 	ListAtomAdd( &pThis -> stack, pResult);
 }
 
-typedef enum ESetOp { UNION } SetOp;
+typedef enum ESetOp { UNION, MINUS } SetOp;
 // Set operations:
+BOOL AtomListCompareAtoms(t_atom* pInList, t_atom* p)
+{
+	return compareAtoms(pInList, p);
+}
 BOOL setContains(t_int count, t_atom* set, t_atom* element);
 BOOL listContains(ListAtom* pList, t_atom* pElement);
 
@@ -917,6 +921,11 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 				op = UNION;
 				afterOp = TRUE;
 			}
+			else if( atomEqualsString( pCurrent, "minus" ) )
+			{
+				op = MINUS;
+				afterOp = TRUE;
+			}
 			else
 			{
 				countFirst ++ ;
@@ -927,11 +936,27 @@ void setOp(t_sgScript* pThis, t_int countArgs, t_atom* pArgs)
 		}
 		else
 		{
-			if( ! listContains( &listReturn, pCurrent ) )
+			ElementAtom* pElToDelete = NULL;
+			switch( op )
 			{
-				t_atom* pAdd = getbytes(sizeof(t_atom));
-				(* pAdd) = * pCurrent;
-				ListAtomAdd( & listReturn, pAdd );
+				case UNION:
+					if( ! listContains( &listReturn, pCurrent ) )
+					{
+						t_atom* pAdd = getbytes(sizeof(t_atom));
+						(* pAdd) = * pCurrent;
+						ListAtomAdd( & listReturn, pAdd );
+					}
+				break;
+				case MINUS:
+					pElToDelete = ListAtomGetElement( &listReturn, pCurrent, AtomListCompareAtoms);
+					if( pElToDelete )
+					{
+						/*t_atom* pAdd = getbytes(sizeof(t_atom));
+						(* pAdd) = * pCurrent;
+						ListAtomAdd( & listReturn, pAdd );*/
+						ListAtomDel( & listReturn, pElToDelete );
+					}
+				break;
 			}
 		}
 	}

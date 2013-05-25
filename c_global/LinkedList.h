@@ -55,6 +55,7 @@ struct S##LIST\
 	ELEMENT* pHead;\
 };\
 \
+typedef BOOL (*LIST##PCompareFunction) (DATA* pInList, DATA* p);\
 typedef struct S##LIST LIST;
 
 #define DEF_LIST(LIST,ELEMENT,DATA,DATA_COPY,MALLOC,FREE)\
@@ -68,7 +69,8 @@ INLINE ELEMENT* LIST##GetFirst(LIST* pList) ;\
 INLINE ELEMENT* LIST##GetLast(LIST* pList) ;\
 INLINE int LIST##HasNext(LIST* pList, ELEMENT* element);\
 INLINE int LIST##HasPrev(LIST* pList, ELEMENT* element);\
-INLINE ELEMENT* LIST##GetElement(LIST* pList, const DATA* pData);\
+INLINE ELEMENT* LIST##GetElementFromPointer(LIST* pList, const DATA* pData);\
+INLINE ELEMENT* LIST##GetElement(LIST* pList, DATA* pData, LIST##PCompareFunction pCompareFunction);\
 INLINE ELEMENT* LIST##GetNext(LIST* pList, ELEMENT* element) ;\
 INLINE ELEMENT* LIST##GetPrev(LIST* pList, ELEMENT* element);\
 \
@@ -127,7 +129,7 @@ INLINE int LIST##HasPrev(LIST* pList, ELEMENT* element)\
     return (element != pList-> pHead);\
 }\
 \
-INLINE ELEMENT* LIST##GetElement(LIST* pList,const DATA* pData)\
+INLINE ELEMENT* LIST##GetElementFromPointer(LIST* pList,const DATA* pData)\
 {\
 	if(!LIST##IsEmpty(pList))\
 	{\
@@ -135,6 +137,21 @@ INLINE ELEMENT* LIST##GetElement(LIST* pList,const DATA* pData)\
 		do\
 		{\
 			if( (pCurrent-> pData) == pData)\
+				return pCurrent;\
+			pCurrent = pCurrent-> pNext;\
+		}\
+		while(pCurrent!= pList-> pHead);\
+	}\
+	return NULL;\
+}\
+INLINE ELEMENT* LIST##GetElement(LIST* pList, DATA* pData, LIST##PCompareFunction pCompareFunction)\
+{\
+	if(!LIST##IsEmpty(pList))\
+	{\
+		ELEMENT* pCurrent= pList-> pHead;\
+		do\
+		{\
+			if( pCompareFunction((pCurrent-> pData), pData) )\
 				return pCurrent;\
 			pCurrent = pCurrent-> pNext;\
 		}\
