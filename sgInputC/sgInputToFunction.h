@@ -5,6 +5,8 @@
 #include <stdarg.h>
 
 
+
+
 //typedef sgData
 /*typedef struct SDeviceCond {
 	t_atom param;
@@ -101,9 +103,18 @@ void IToFBlockFree(IToFBlock* pIToFBlock);
 #define ITOFBLOCK_EXIT(NAME)\
 	ListDeviceBlockExit( & NAME -> listDevice);\
 	ListMessageBlockExit( & NAME -> listMessage);
-	
+
 
 DECL_LIST_STD(ListIToF,ElementIToF,IToFBlock);
+
+/*
+	listIToF 	> IToFBlock	> DeviceBlock	> name : t_atom
+											> cond : Pack
+
+							> MessageBlock	> name : t_atom
+											> MessageFragment 	> isAtom
+																> atom | ValueInformation
+*/
 
 typedef struct _sgInputToFunction {
 	//internal obj information:
@@ -119,8 +130,26 @@ void sgInputToFunctionExit();
 
 CONSTRUCTOR(sgInputToFunction,);
 DESTRUCTOR(sgInputToFunction,x);
+/*
+	parses the input (-> parseDevice)
+	search listIToF for the device given as input (-> deviceFound)
+		switch( type of messageFragment )
+			atom: just output
+				(-> getAtom)
+*/
 void sgInputToFunction_OnInput(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv);
+// -> traverseAtomsAsPacks, parseIToFAndAppendtoThis
 void sgInputToFunction_OnSetInputToFunctionList(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv);
+
+/*
+	calculates a DeviceBlock from an array of atoms ( -> traverseAtomsAsPacks, device_ )
+*/
+// pDevice should be allocated yet!!
+void parseDevice(DeviceBlock* pDevice, int count, t_atom* atoms);
+	void device_(t_atom* pName, int count, t_atom* atoms, va_list vaList);
+	void inputCond(t_atom* pName, int count, t_atom* atoms, va_list vaList);
+BOOL deviceFound(IToFBlock* pIToF, int arg, t_atom* argv);
+t_atom getAtom(DeviceBlock* pDeviceBlockInput, ValueInformation* pValInf);
 
 // pIToF should be allocated yet!!
 void parseIToF(IToFBlock* pIToF, int count, t_atom* atoms);
@@ -136,8 +165,6 @@ void parseDeviceAndAppendToIToF(t_atom* pName, int count, t_atom* atoms, va_list
 // allocates a new DeviceBlock, representing the result
 // append this DeviceBlock to "pThis"
 void parseIToFAndAppendtoThis(t_atom* pName, int count, t_atom* atoms, va_list vaList);
-// pDevice should be allocated yet!!
-void parseDevice(DeviceBlock* pDevice, int count, t_atom* atoms);
 
 typedef void (*FForPack) (t_atom* pName, int count, t_atom* atoms, va_list vaList);
 
@@ -150,9 +177,5 @@ typedef struct STraversalInfo
 #define ALLPACKS (-1)
 
 TraversalInfo traverseAtomsAsPacks(int atomCount, t_atom* atoms, FForPack func, int iCountPacksMax, ... );
-
-
-
-t_atom getAtom_(DeviceBlock* pDeviceBlockInput, ValueInformation* pValInf);
 
 #endif

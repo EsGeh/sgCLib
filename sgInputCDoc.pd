@@ -1,4 +1,4 @@
-#N canvas 0 49 1438 628 10;
+#N canvas 0 49 934 849 10;
 #X obj 183 84 comport;
 #X obj 183 106 t a a;
 #X obj 183 128 sgDeviceC;
@@ -8,21 +8,51 @@
 #X obj 214 45 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
 -1;
 #X msg 248 46 close \, open 0;
-#X obj 147 401 sgPrepend set;
+#X obj 255 445 sgPrepend set;
 #X obj 400 166 sgInputToFEdit;
 #X obj 400 144 sgPackFromHuman;
 #X msg 44 288 list sgDevice.meta 3 index 1 1;
 #X obj 148 349 sgInputToFunctionC;
 #X obj 400 74 loadbang;
-#X msg 147 423 trigger 0;
+#X msg 255 467 trigger 0;
 #X msg 37 257 list sgDevice.trigger 3 index 1 1;
 #X msg 400 96 triggers ( input ( sgDevice.trigger ( ) ) trigger ( [
 index ] ) ) analog ( input ( sgDevice.analog ( ) ) analog ( index [
 index ] value [ value -10 10 0 1 ] ) );
 #X obj 273 394 sgPackFType trigger;
-#X obj 102 373 print blubb;
+#X obj 49 380 print blubb;
 #X obj 273 416 sgMessageFromPack;
 #X obj 498 416 route trigger analog;
+#X obj 237 593 sgPackFromHuman;
+#X msg 663 455 pack ( pack #[ subpack ( test ) #] );
+#X obj 666 481 sgPackFromHuman;
+#X msg 237 571 list sgDevice.note ( pitch ( 7 ) volume ( 77 ) );
+#X obj 530 508 sgEventToInstrument;
+#X obj 436 468 sgPackFromHuman;
+#X obj 163 641 print Hallo;
+#X obj 110 416 sgPackFType DestX;
+#X obj 117 448 sgPackGetListParam;
+#X msg 429 22 notes ( input ( sgDevice.note ( ) ) DestX ( #[ start
+( pitch ( [ pitch ] ) volume ( [ volume 0 2 ] ) ) #] ) );
+#X obj 117 470 sgPackFromHuman;
+#X obj 113 517 s instrX;
+#X obj 636 599 r instrX;
+#X obj 633 640 print instrX;
+#X obj 207 205 sgMidiPiano sgDevice.note 1;
+#X obj 400 350 s \$0-listInputToFunction;
+#X obj 253 327 r \$0-listInputToFunction;
+#X text 290 650 sgInputToFunctionC;
+#X text 290 673 RIGHT INLET: sets the list of sgPacks \, describing
+what to output on a specific input;
+#X msg 537 374 notes ( input ( sgDevice.note ( ) ) DestX ( start (
+pitch ( [ pitch ] ) volume ( [ volume 0 2 ] ) ) ) );
+#X text 317 701 format of list element:;
+#X text 337 717 <iToF0> ( input ( <device> ( ) ) <destX> ( bla0 bla1
+... ) <destY> ( bli0 bli1 ... ) );
+#X text 316 747 comment: the contents of a <dest..> - Pack is arbitrary.
+But beware: If you use "sgPackFromHuman" and you want it to be correctly
+formatted sgPacks \, you should better enclose it with "#[" and "#]"
+\, or you may end up in incorrect sgPacks!;
 #X connect 0 0 1 0;
 #X connect 1 0 2 0;
 #X connect 2 0 5 0;
@@ -34,16 +64,30 @@ index ] value [ value -10 10 0 1 ] ) );
 #X connect 2 3 5 0;
 #X connect 2 3 12 0;
 #X connect 2 4 4 0;
+#X connect 2 4 35 0;
 #X connect 6 0 0 0;
 #X connect 7 0 0 0;
 #X connect 8 0 14 0;
-#X connect 9 0 12 1;
+#X connect 9 0 36 0;
 #X connect 10 0 9 0;
 #X connect 11 0 12 0;
 #X connect 12 0 17 0;
+#X connect 12 0 26 0;
 #X connect 12 0 18 0;
+#X connect 12 0 28 0;
 #X connect 13 0 16 0;
 #X connect 15 0 12 0;
 #X connect 16 0 10 0;
 #X connect 17 0 19 0;
 #X connect 19 0 8 0;
+#X connect 21 0 12 0;
+#X connect 22 0 23 0;
+#X connect 24 0 21 0;
+#X connect 26 0 25 0;
+#X connect 28 0 29 0;
+#X connect 29 0 31 0;
+#X connect 30 0 10 0;
+#X connect 31 0 32 0;
+#X connect 33 0 34 0;
+#X connect 35 0 12 0;
+#X connect 37 0 12 1;

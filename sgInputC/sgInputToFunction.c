@@ -34,7 +34,7 @@ void IToFBlockFree(IToFBlock* pIToFBlock)
 	{
 		DeviceBlock* pDevice = pElDevice ->pData;
 		deviceBlockFree(pDevice);
-		
+
 		pElDevice = ListDeviceBlockGetNext( & pIToFBlock ->listDevice, pElDevice);
 	}
 	ListDeviceBlockExit( & pIToFBlock -> listDevice);
@@ -60,14 +60,7 @@ t_class* sgInputToFunctionInit()
 		CLASS_DEFAULT,
 		0
 	);
-	//class_addlist(
-	/*class_addmethod(
-		sgInputToFunctionClass,
-		(t_method )sgInputToFunction_OnInput,
-		gensym("input"),
-		A_GIMME
-	);*/
- 	class_addlist(sgInputToFunctionClass, sgInputToFunction_OnInput);
+	class_addlist(sgInputToFunctionClass, sgInputToFunction_OnInput);
 	class_addmethod(
 		sgInputToFunctionClass,
 		(t_method )sgInputToFunction_OnSetInputToFunctionList,
@@ -75,7 +68,6 @@ t_class* sgInputToFunctionInit()
 		A_GIMME
 	);
 
-	//class_addlist(sgInputToFunctionClass, sgInputToFunction_OnSetInputToFunctionList);
 	return sgInputToFunctionClass;
 }
 void sgInputToFunctionExit()
@@ -117,6 +109,130 @@ DESTRUCTOR(sgInputToFunction,x)
 	ListIToFExit( & x -> listIToF);
 }
 
+void sgInputToFunction_OnInput(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv)
+{
+	// index of the input list
+	//t_int indexCurrentAtom = 0;
+
+	//post("on_Input");
+	// 1. parse the input:
+	DeviceBlock deviceBlockInput;
+	DEVICEBLOCK_INIT( &deviceBlockInput);
+	parseDevice(&deviceBlockInput, argc, argv);
+	//onInput_parseDevice(&device,argc,argv);
+
+	// search listIToF for the device given as input:
+	// traverse through the "inputToFunction"-list
+	ElementIToF* pElIToF = ListIToFGetFirst(&pThis -> listIToF);
+	while (pElIToF)
+	{
+		//post("inputToFunction pack");
+		IToFBlock* pIToF = pElIToF -> pData;
+		if(deviceFound(pIToF,argc,argv))
+		{
+			//POST("PASSED!");
+			// output all the messages of the current block:
+			ElementMessageBlock* pElMessage = ListMessageBlockGetFirst( & pIToF -> listMessage );
+			while (pElMessage)
+			{
+				MessageBlock* pMessage = pElMessage -> pData;
+				t_atom atomList[128];
+				atomList[0] = pMessage -> name;
+				int iCurrentAtom = 2;
+				ElementMessageFragment* pElMessageFrag = ListMessageFragmentGetFirst( & pMessage -> listMessageFragment);
+				while (pElMessageFrag)
+				{
+					MessageFragment* pMessageFrag = pElMessageFrag -> pData;
+					if(pMessageFrag-> isAtom)
+					{
+						atomList[iCurrentAtom] = pMessageFrag -> atom;
+					}
+					else
+					{
+						atomList[iCurrentAtom] = getAtom(&deviceBlockInput, & pMessageFrag -> valueInformation);
+						//POST("Not an atom!");
+						//atomList[iCurrentAtom] = pMessageFrag ->
+
+					}
+					iCurrentAtom ++;
+					//traverseAtomsAsPacks(argc, argv, onInputFits, 1, ?);
+					pElMessageFrag = ListMessageFragmentGetNext( & pMessage -> listMessageFragment, pElMessageFrag);
+				}
+				SETFLOAT( & atomList[1], iCurrentAtom - 2);
+				outlet_list(
+					pThis -> obj . ob_outlet,
+					& s_list,
+					iCurrentAtom,
+					atomList
+				);
+				pElMessage = ListMessageBlockGetNext ( & pIToF -> listMessage, pElMessage);
+			}
+		}
+		pElIToF = ListIToFGetNext( & pThis -> listIToF, pElIToF);
+	}
+	deviceBlockFree(& deviceBlockInput);
+}
+
+void sgInputToFunction_OnSetInputToFunctionList(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv)
+{
+	/* format:
+	iToF( input() message1() message2() ...)
+	*/
+	// to do correctly delete listIToF:
+	ListIToFExit(& pThis -> listIToF);
+	ListIToFInit(& pThis -> listIToF);
+
+
+	post("onSetIToF");
+	/*POST("argc: %i",argc);*/
+	traverseAtomsAsPacks(argc, argv, parseIToFAndAppendtoThis, ALLPACKS, pThis);
+}
+
+void parseDevice(DeviceBlock* pDevice, int count, t_atom* atoms)
+{
+	traverseAtomsAsPacks(count, atoms, device_, 1, pDevice);
+}
+
+void device_(t_atom* pName, int count, t_atom* atoms, va_list vaList)
+{
+	/*t_sgInputToFunction* pThis;
+	pThis = va_arg(vaList,t_sgInputToFunction*);*/
+	DeviceBlock* pDevice = va_arg(vaList,DeviceBlock*);
+	pDevice -> name = *pName;
+
+	/*char buf[256];
+	atom_string(pName, buf, 256);
+	POST("device: %s", buf);*/
+
+	//DEVICEBLOCK_NEW(pDevice, *pName);
+	{
+		//parseDevice(pDevice,count,atoms);
+		traverseAtomsAsPacks(count,atoms,inputCond,ALLPACKS,pDevice);
+	}
+	//ListDeviceBlockAdd( & pIToF -> listDevice, pDevice);
+}
+
+void inputCond(t_atom* pName, int count, t_atom* atoms, va_list vaList)
+{
+	/*t_sgInputToFunction* pThis;
+	pThis = va_arg(vaList,t_sgInputToFunction*);*/
+	DeviceBlock* pDevice = va_arg(vaList,DeviceBlock*);
+
+	/*char buf[256];
+	atom_string(pName, buf, 256);
+	POST("inputCond: %s", buf);*/
+
+	PACK_NEW(pPackInputCond, *pName);
+	{
+		for(int iAtom = 0; iAtom < count; iAtom++)
+		{
+			PACK_ADD_ATOM(pPackInputCond, atoms[iAtom]);
+		}
+	}
+	//PACK_ADD_PACK(pDevice, PackInputCond);
+	ListPackAdd( & pDevice -> listDeviceCond, pPackInputCond);
+}
+
 BOOL deviceFound(IToFBlock* pIToF, int arg, t_atom* argv)
 {
 	// traverse Devices:
@@ -130,7 +246,7 @@ BOOL deviceFound(IToFBlock* pIToF, int arg, t_atom* argv)
 		//and compare it to the current device:
 		if(compareAtoms(& pDevice -> name, input_deviceName))
 		{
-			// traverse conditions: 
+			// traverse conditions:
 			ElementPack* pElInpCond = ListPackGetFirst( & pDevice -> listDeviceCond);
 			while (pElInpCond)
 			{
@@ -166,7 +282,7 @@ BOOL deviceFound(IToFBlock* pIToF, int arg, t_atom* argv)
 				if(!bInputPassed)
 					return FALSE;
 				pElInpCond = ListPackGetNext( & pDevice -> listDeviceCond, pElInpCond);
-								
+
 			}
 			return TRUE;
 		}
@@ -174,10 +290,6 @@ BOOL deviceFound(IToFBlock* pIToF, int arg, t_atom* argv)
 	}
 	return FALSE;
 }
-
-/*void onOutputFits(t_atom* pName, int count, t_atom* atoms, va_list vaList)
-{
-}*/
 
 t_atom getAtom(DeviceBlock* pDeviceBlockInput, ValueInformation* pValInf)
 {
@@ -225,145 +337,9 @@ t_atom getAtom(DeviceBlock* pDeviceBlockInput, ValueInformation* pValInf)
 	return ret;
 }
 
-void sgInputToFunction_OnInput(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv)
+/*void onOutputFits(t_atom* pName, int count, t_atom* atoms, va_list vaList)
 {
-	// index of the input list
-	//t_int indexCurrentAtom = 0;
-
-	//post("on_Input");
-	// 1. parse the input:
-	DeviceBlock deviceBlockInput;
-	DEVICEBLOCK_INIT( &deviceBlockInput);
-	parseDevice(&deviceBlockInput, argc, argv);
-	//onInput_parseDevice(&device,argc,argv);
-	
-	// now traverse through the "inputToFunction"-list
-	ElementIToF* pElIToF = ListIToFGetFirst(&pThis -> listIToF);
-	while (pElIToF)
-	{
-		//post("inputToFunction pack");
-		IToFBlock* pIToF = pElIToF -> pData;
-		if(deviceFound(pIToF,argc,argv))
-		{
-			//POST("PASSED!");
-			// output all the messages of the current block:
-			ElementMessageBlock* pElMessage = ListMessageBlockGetFirst( & pIToF -> listMessage );
-			while (pElMessage)
-			{
-				MessageBlock* pMessage = pElMessage -> pData;
-				t_atom atomList[20];
-				atomList[0] = pMessage -> name;
-				int iCurrentAtom = 2;
-				ElementMessageFragment* pElMessageFrag = ListMessageFragmentGetFirst( & pMessage -> listMessageFragment);
-				while (pElMessageFrag)
-				{
-					MessageFragment* pMessageFrag = pElMessageFrag -> pData;
-					if(pMessageFrag-> isAtom)
-					{
-						atomList[iCurrentAtom] = pMessageFrag -> atom;
-					}
-					else
-					{
-						atomList[iCurrentAtom] = getAtom(&deviceBlockInput, & pMessageFrag -> valueInformation);
-						//POST("Not an atom!");
-						//atomList[iCurrentAtom] = pMessageFrag ->
-
-					}
-					iCurrentAtom ++;
-					//traverseAtomsAsPacks(argc, argv, onInputFits, 1, ?);
-					pElMessageFrag = ListMessageFragmentGetNext( & pMessage -> listMessageFragment, pElMessageFrag);
-				}
-				SETFLOAT( & atomList[1], iCurrentAtom - 2);
-				outlet_list(
-					pThis -> obj . ob_outlet,
-					& s_list,
-					iCurrentAtom,
-					atomList
-				);
-				pElMessage = ListMessageBlockGetNext ( & pIToF -> listMessage, pElMessage);
-			}
-		}
-		pElIToF = ListIToFGetNext( & pThis -> listIToF, pElIToF);
-	}
-	deviceBlockFree(& deviceBlockInput);
-}
-
-
-TraversalInfo traverseAtomsAsPacks(int atomCount, t_atom* atoms, FForPack func, int iCountPacksMax, ... )
-{
-	int iCurrentAtom = 0;
-	int iIndexPack = 0;
-	while(
-		(iCurrentAtom < atomCount)
-		&& ((iIndexPack < iCountPacksMax) || (iCountPacksMax == ALLPACKS))
-	)
-	{
-		//POST("iIndexPack: %i",iCurrentAtom);
-		PACKHEADER_FROMATOMS(pack_name, pack_count, &atoms[iCurrentAtom]);
-
-		va_list vaList;
-		va_start(vaList, iCountPacksMax);
-		func(pack_name, pack_count, &atoms[iCurrentAtom+2], vaList);
-		va_end(vaList);
-
-		iCurrentAtom += ( 2 + pack_count );
-		iIndexPack ++;
-	}
-	TraversalInfo travInf;
-	travInf.atoms =  & atoms[iCurrentAtom];
-	travInf.count = atomCount - iCurrentAtom;
-	return travInf;
-	//(*atomCount) -= iCurrentAtom;
-	//(*atoms) += (*atomCount);
-	//return & (*atoms)[iCurrentAtom];
-}
-
-void inputCond(t_atom* pName, int count, t_atom* atoms, va_list vaList)
-{
-	/*t_sgInputToFunction* pThis;
-	pThis = va_arg(vaList,t_sgInputToFunction*);*/
-	DeviceBlock* pDevice = va_arg(vaList,DeviceBlock*);
-
-	/*char buf[256];
-	atom_string(pName, buf, 256);
-	POST("inputCond: %s", buf);*/
-
-	PACK_NEW(pPackInputCond, *pName);
-	{
-		for(int iAtom = 0; iAtom < count; iAtom++)
-		{
-			PACK_ADD_ATOM(pPackInputCond, atoms[iAtom]);
-		}
-	}
-	//PACK_ADD_PACK(pDevice, PackInputCond);
-	ListPackAdd( & pDevice -> listDeviceCond, pPackInputCond);
-}
-
-void device_(t_atom* pName, int count, t_atom* atoms, va_list vaList);
-
-void parseDevice(DeviceBlock* pDevice, int count, t_atom* atoms)
-{
-	traverseAtomsAsPacks(count, atoms, device_, 1, pDevice);
-}
-
-void device_(t_atom* pName, int count, t_atom* atoms, va_list vaList)
-{
-	/*t_sgInputToFunction* pThis;
-	pThis = va_arg(vaList,t_sgInputToFunction*);*/
-	DeviceBlock* pDevice = va_arg(vaList,DeviceBlock*);
-	pDevice -> name = *pName;
-
-	/*char buf[256];
-	atom_string(pName, buf, 256);
-	POST("device: %s", buf);*/
-
-	//DEVICEBLOCK_NEW(pDevice, *pName);
-	{
-		//parseDevice(pDevice,count,atoms);
-		traverseAtomsAsPacks(count,atoms,inputCond,ALLPACKS,pDevice);
-	}
-	//ListDeviceBlockAdd( & pIToF -> listDevice, pDevice);
-}
+}*/
 
 void parseDeviceAndAppendToIToF(t_atom* pName, int count, t_atom* atoms, va_list vaList)
 {
@@ -385,8 +361,6 @@ void parseDeviceAndAppendToIToF(t_atom* pName, int count, t_atom* atoms, va_list
 
 void input(t_atom* pName, int count, t_atom* atoms, va_list vaList)
 {
-	/*t_sgInputToFunction* pThis;
-	pThis = va_arg(vaList,t_sgInputToFunction*);*/
 	IToFBlock* pIToF = va_arg(vaList,IToFBlock*);
 
 	/*char buf[256];
@@ -444,7 +418,7 @@ void message(t_atom* pName, int count, t_atom* atoms, va_list vaList)
 			}
 			if( currentParam != -1)
 			{
-				
+
 				/*valInf.deviceParam = *pCurrentAtom;
 				valInf.minOut = valInf.minIn = 0;
 				valInf.maxOut = valInf.maxIn = 1;
@@ -461,7 +435,7 @@ void message(t_atom* pName, int count, t_atom* atoms, va_list vaList)
 					break;
 					case 2:
 						valInf.maxOut = atom_getfloat(pCurrentAtom);
-					break;	
+					break;
 					case 3:
 						valInf.minIn = atom_getfloat(pCurrentAtom);
 					break;
@@ -516,17 +490,31 @@ void parseIToFAndAppendtoThis(t_atom* pName, int count, t_atom* atoms, va_list v
 	ListIToFAdd(& pThis -> listIToF,pIToF);
 }
 
-void sgInputToFunction_OnSetInputToFunctionList(t_sgInputToFunction* pThis, t_symbol* sym, int argc, t_atom* argv)
+TraversalInfo traverseAtomsAsPacks(int atomCount, t_atom* atoms, FForPack func, int iCountPacksMax, ... )
 {
-	/* format:
-	iToF( input() message1() message2() ...)
-	*/
-	// to do correctly delete listIToF:
-	ListIToFExit(& pThis -> listIToF);
-	ListIToFInit(& pThis -> listIToF);
+	int iCurrentAtom = 0;
+	int iIndexPack = 0;
+	while(
+		(iCurrentAtom < atomCount)
+		&& ((iIndexPack < iCountPacksMax) || (iCountPacksMax == ALLPACKS))
+	)
+	{
+		//POST("iIndexPack: %i",iCurrentAtom);
+		PACKHEADER_FROMATOMS(pack_name, pack_count, &atoms[iCurrentAtom]);
 
+		va_list vaList;
+		va_start(vaList, iCountPacksMax);
+		func(pack_name, pack_count, &atoms[iCurrentAtom+2], vaList);
+		va_end(vaList);
 
-	post("onSetIToF");
-	/*POST("argc: %i",argc);*/
-	traverseAtomsAsPacks(argc, argv, parseIToFAndAppendtoThis, ALLPACKS, pThis);
+		iCurrentAtom += ( 2 + pack_count );
+		iIndexPack ++;
+	}
+	TraversalInfo travInf;
+	travInf.atoms =  & atoms[iCurrentAtom];
+	travInf.count = atomCount - iCurrentAtom;
+	return travInf;
+	//(*atomCount) -= iCurrentAtom;
+	//(*atoms) += (*atomCount);
+	//return & (*atoms)[iCurrentAtom];
 }
